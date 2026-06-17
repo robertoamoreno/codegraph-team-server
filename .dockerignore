@@ -1,0 +1,15 @@
+.git
+.github
+.claude
+.cursor
+node_modules
+dist
+coverage
+.codegraph
+.codegraph-*
+.codegraph-server
+site/node_modules
+telemetry-worker/node_modules
+npm-debug.log*
+Dockerfile
+docker-compose.yml

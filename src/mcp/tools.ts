@@ -633,7 +633,7 @@ export function getStaticTools(): ToolDefinition[] {
 
 /**
  * The MCP tools served by DEFAULT (short names). The other defined tools
- * (callees, impact, files, status) remain fully functional — handlers stay,
+ * (callees, impact, files) remain fully functional — handlers stay,
  * the library API and CLI are untouched, and `CODEGRAPH_MCP_TOOLS` re-enables
  * any of them — they just aren't LISTED to agents anymore.
  *
@@ -645,15 +645,16 @@ export function getStaticTools(): ToolDefinition[] {
  *   standalone tool.
  * - `codegraph_callees` is redundant by construction: a symbol's body (which
  *   node returns) IS its callee list, plus the caller/callee trail.
- * - `codegraph_files` / `codegraph_status`: the tiny-repo audit (see
- *   getTools) found they "reduce to one grep"; staleness banners already
- *   inline the pending-sync info on every read tool, and the CLI covers
- *   diagnostics.
+ * - `codegraph_status` is listed because shared/remote servers need a cheap
+ *   way for clients to confirm freshness and index health.
+ * - `codegraph_files`: the tiny-repo audit (see getTools) found it "reduces
+ *   to one grep"; staleness banners already inline the pending-sync info on
+ *   every read tool, and the CLI covers diagnostics.
  * - `codegraph_callers` stays: exhaustive call-site enumeration (every
  *   caller with file:line, callback registrations labeled, one section per
  *   same-named definition) is the one job explore/node don't replicate.
  */
-const DEFAULT_MCP_TOOLS = new Set(['explore', 'node', 'search', 'callers']);
+const DEFAULT_MCP_TOOLS = new Set(['explore', 'node', 'search', 'callers', 'status']);
 
 /**
  * Tool handler that executes tools against a CodeGraph instance
@@ -787,6 +788,7 @@ export class ToolHandler {
         'codegraph_explore',
         'codegraph_search',
         'codegraph_node',
+        'codegraph_status',
       ]);
       if (stats.fileCount < TINY_REPO_FILE_THRESHOLD) {
         visible = visible.filter(t => TINY_REPO_CORE_TOOLS.has(t.name));

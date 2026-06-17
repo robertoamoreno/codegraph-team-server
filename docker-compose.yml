@@ -1,0 +1,20 @@
+services:
+  codegraph:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      CODEGRAPH_ADMIN_TOKEN: "change-me"
+      CODEGRAPH_MCP_TOKEN: "change-me"
+      CODEGRAPH_SERVER_CORS_ORIGIN: "*"
+      # Reference this name from the UI's "Token env var" field for HTTPS remotes.
+      GITLAB_TOKEN: ""
+      GITHUB_TOKEN: ""
+    volumes:
+      - codegraph-data:/data
+      - ./projects:/projects
+      # For SSH remotes, mount a read-only deploy key and known_hosts file.
+      # - ~/.ssh:/root/.ssh:ro
+
+volumes:
+  codegraph-data:

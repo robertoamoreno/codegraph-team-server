@@ -109,6 +109,33 @@ codegraph uninstall
 
 ---
 
+## Shared Docker Server
+
+CodeGraph can also run as a shared HTTP service for teams that want to index
+server-side checkouts and expose registry-bound MCP endpoints to developers.
+
+```bash
+docker compose up --build
+```
+
+The container serves a management UI on port `3000`, persists its project
+registry under `/data`, and only accepts project paths or managed Git checkouts
+under `/projects`. Add mounted paths, GitLab/GitHub/generic Git remotes,
+optional branch/credential env-var config, and per-project scheduled syncs from
+the UI. Git credentials are read from environment variables or mounted SSH
+config; token values are not stored by the UI registry.
+Registered projects get MCP endpoints like:
+
+```text
+http://HOST:3000/mcp/PROJECT_ID
+```
+
+Set `CODEGRAPH_ADMIN_TOKEN` and `CODEGRAPH_MCP_TOKEN` before exposing the port
+outside a trusted development network. See `docs/docker-server.md` for the full
+server-mode guide.
+
+---
+
 ## Why CodeGraph?
 
 When Claude Code explores a codebase, it spawns **Explore agents** that scan files with grep, glob, and Read — consuming tokens on every tool call.

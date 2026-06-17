@@ -17,17 +17,19 @@ describe('CODEGRAPH_MCP_TOOLS allowlist', () => {
 
   const listed = () => new ToolHandler(null).getTools().map(t => t.name).sort();
 
-  it('exposes the default 4-tool surface when unset', () => {
+  it('exposes the default 5-tool surface when unset', () => {
     delete process.env[ENV];
     // The default set (see DEFAULT_MCP_TOOLS): explore + node are the
     // validated workhorses, search the cheap lookup, callers the one
-    // irreplaceable enumerator. callees/impact/files/status stay defined
-    // and executable but unlisted — impact appeared in ZERO recorded runs.
+    // irreplaceable enumerator, and status gives shared servers a cheap
+    // freshness/health check. callees/impact/files stay defined and
+    // executable but unlisted — impact appeared in ZERO recorded runs.
     expect(listed()).toEqual([
       'codegraph_callers',
       'codegraph_explore',
       'codegraph_node',
       'codegraph_search',
+      'codegraph_status',
     ]);
   });
 
@@ -48,7 +50,7 @@ describe('CODEGRAPH_MCP_TOOLS allowlist', () => {
 
   it('treats an empty/whitespace value as unset (default surface)', () => {
     process.env[ENV] = '   ';
-    expect(listed()).toHaveLength(4);
+    expect(listed()).toHaveLength(5);
     expect(listed()).toContain('codegraph_explore');
   });
 

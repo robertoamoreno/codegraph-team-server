@@ -20,6 +20,7 @@
  *   codegraph callees <symbol>   Find what a function/method calls
  *   codegraph impact <symbol>    Analyze what code is affected by changing a symbol
  *   codegraph affected [files]   Find test files affected by changes
+ *   codegraph server             Run the HTTP management server
  *   codegraph upgrade [version]  Update CodeGraph to the latest release
  */
 
@@ -1346,6 +1347,72 @@ program
       note: (m) => clack.log.success(m),
       done: (m) => clack.outro(m),
     });
+  });
+
+/**
+ * codegraph server
+ */
+program
+  .command('server')
+  .description('Run the CodeGraph HTTP server with project management UI and remote MCP endpoints')
+  .option('--host <host>', 'Host/interface to bind')
+  .option('--port <port>', 'Port to bind')
+  .option('--data-dir <path>', 'Directory for server registry data')
+  .option('--projects-root <path>', 'Only allow projects under this directory')
+  .option('--admin-token <token>', 'Bearer token for the admin API/UI')
+  .option('--mcp-token <token>', 'Bearer token for MCP clients')
+  .option('--cors-origin <origin>', 'Access-Control-Allow-Origin value')
+  .option('--no-watch', 'Disable MCP file watchers for remote sessions')
+  .action(async (options: {
+    host?: string;
+    port?: string;
+    dataDir?: string;
+    projectsRoot?: string;
+    adminToken?: string;
+    mcpToken?: string;
+    corsOrigin?: string;
+    watch?: boolean;
+  }) => {
+    try {
+      const { startCodeGraphServer, optionsFromEnv } = await import('../server');
+      const port = options.port ? Number(options.port) : undefined;
+      if (port !== undefined && (!Number.isInteger(port) || port <= 0 || port > 65535)) {
+        error(`Invalid port: ${options.port}`);
+        process.exit(1);
+      }
+
+      const resolved = optionsFromEnv({
+        host: options.host,
+        port,
+        dataDir: options.dataDir,
+        projectsRoot: options.projectsRoot,
+        adminToken: options.adminToken,
+        mcpToken: options.mcpToken,
+        corsOrigin: options.corsOrigin,
+        watch: options.watch,
+      });
+      const running = await startCodeGraphServer(resolved);
+      const url = `http://${resolved.host === '0.0.0.0' ? 'localhost' : resolved.host}:${resolved.port}`;
+      success(`CodeGraph server listening at ${url}`);
+      info(`Projects root: ${resolved.projectsRoot}`);
+      info(`Server data:   ${resolved.dataDir}`);
+      if (!resolved.adminToken) {
+        warn('CODEGRAPH_ADMIN_TOKEN is not set; the admin API is open to anyone who can reach this port.');
+      }
+      if (!resolved.mcpToken) {
+        warn('CODEGRAPH_MCP_TOKEN is not set; MCP endpoints are open to anyone who can reach this port.');
+      }
+
+      const shutdown = async () => {
+        await running.close();
+        process.exit(0);
+      };
+      process.once('SIGINT', () => { void shutdown(); });
+      process.once('SIGTERM', () => { void shutdown(); });
+    } catch (err) {
+      error(`Failed to start server: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
   });
 
 /**
